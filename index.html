@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>The Plan — $64,000 Destroyed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { -webkit-box-sizing: border-box; box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f0f; color: #f0f0f0; font-family: 'DM Sans', sans-serif; padding: 20px 12px 40px; -webkit-tap-highlight-color: transparent; }
+  .poster { max-width: 680px; margin: 0 auto; }
+  .header { text-align: center; margin-bottom: 16px; }
+  .title { font-family: 'Bebas Neue', sans-serif; font-size: 44px; letter-spacing: 4px; color: #f0f0f0; line-height: 1; }
+  .subtitle { font-size: 13px; color: #999; margin-top: 6px; }
+  .rule { font-size: 11px; color: #555; margin-top: 4px; font-style: italic; }
+  .legend { margin-bottom: 14px; text-align: center; line-height: 2; }
+  .legend-item { display: inline-block; margin: 2px 8px; font-size: 11px; color: #999; vertical-align: middle; }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+  .grid { display: -webkit-box; display: -webkit-flex; display: flex; -webkit-flex-wrap: wrap; flex-wrap: wrap; gap: 4px; }
+  .sq { border-radius: 4px; border: 1.5px solid transparent; cursor: pointer; position: relative; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; overflow: hidden; }
+  .sq:active { opacity: 0.75; }
+  .sq-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.58); display: none; -webkit-box-align: center; -webkit-align-items: center; align-items: center; -webkit-box-pack: center; -webkit-justify-content: center; justify-content: center; border-radius: 3px; flex-direction: column; gap: 2px; }
+  .sq-overlay.show { display: -webkit-box; display: -webkit-flex; display: flex; }
+  .sq-check { color: #fff; font-weight: bold; line-height: 1; }
+  .sq-date-label { color: rgba(255,255,255,0.7); font-size: 7px; line-height: 1; text-align: center; }
+  .sq-star { position: absolute; top: 1px; right: 2px; font-size: 8px; color: rgba(255,255,255,0.75); line-height: 1; }
+  .sq.unsaved { outline: 2px dashed rgba(255,255,255,0.4); outline-offset: -2px; }
+
+  .progress-section { margin-top: 16px; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; align-items: center; gap: 10px; }
+  .progress-bar-wrap { -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 0.5px solid rgba(255,255,255,0.1); }
+  .progress-bar-fill { height: 100%; background: #1D9E75; border-radius: 4px; width: 0%; -webkit-transition: width 0.4s; transition: width 0.4s; }
+  .progress-label { font-size: 12px; color: #999; white-space: nowrap; }
+  .progress-pct { font-size: 13px; font-weight: 500; color: #f0f0f0; min-width: 36px; text-align: right; }
+  .stats-row { display: -webkit-box; display: -webkit-flex; display: flex; gap: 8px; margin-top: 12px; }
+  .stat-card { -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; background: #1a1a1a; border-radius: 10px; padding: 10px 6px; text-align: center; border: 0.5px solid rgba(255,255,255,0.1); }
+  .stat-label { font-size: 10px; color: #999; margin-bottom: 3px; }
+  .stat-value { font-size: 18px; font-weight: 500; color: #f0f0f0; }
+  .stat-sub { font-size: 10px; color: #555; margin-top: 1px; }
+
+  .action-row { display: -webkit-box; display: -webkit-flex; display: flex; gap: 8px; margin-top: 14px; }
+  .save-btn { -webkit-box-flex: 1; -webkit-flex: 1; flex: 1; font-size: 14px; font-weight: 500; color: #0f0f0f; background: #1D9E75; border: none; border-radius: 10px; padding: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; -webkit-appearance: none; -webkit-transition: opacity 0.2s; transition: opacity 0.2s; }
+  .save-btn:disabled { opacity: 0.4; cursor: default; }
+  .save-btn.saving { opacity: 0.6; }
+  .undo-btn, .reset-btn { font-size: 12px; color: #999; background: none; border: 0.5px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 12px 16px; cursor: pointer; font-family: 'DM Sans', sans-serif; -webkit-appearance: none; }
+
+  .status-bar { text-align: center; font-size: 11px; color: #555; margin-top: 8px; min-height: 16px; }
+  .status-bar.unsaved-notice { color: #BA7517; }
+  .status-bar.saved-notice { color: #1D9E75; }
+  .status-bar.error-notice { color: #E24B4A; }
+
+  .celebration { display: none; text-align: center; padding: 12px 16px; margin-top: 12px; border-radius: 10px; font-size: 14px; font-weight: 500; background: rgba(29,158,117,0.15); color: #4cd9a8; border: 0.5px solid rgba(29,158,117,0.4); }
+
+  /* Date picker popup */
+  .date-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.75); z-index: 200; -webkit-box-align: center; align-items: center; -webkit-box-pack: center; justify-content: center; padding: 20px; }
+  .date-overlay.show { display: -webkit-box; display: -webkit-flex; display: flex; }
+  .date-box { background: #1a1a1a; border: 0.5px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 24px 20px; max-width: 300px; width: 100%; text-align: center; }
+  .date-box h3 { font-size: 15px; font-weight: 500; color: #f0f0f0; margin-bottom: 6px; }
+  .date-box p { font-size: 12px; color: #666; margin-bottom: 18px; }
+  .date-input { width: 100%; background: #222; border: 0.5px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 10px 12px; font-size: 15px; color: #f0f0f0; font-family: 'DM Sans', sans-serif; margin-bottom: 16px; -webkit-appearance: none; text-align: center; }
+  .date-btns { display: -webkit-box; display: -webkit-flex; display: flex; gap: 10px; }
+  .date-btns button { -webkit-box-flex: 1; flex: 1; padding: 11px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; -webkit-appearance: none; }
+  .date-cancel { background: none; color: #999; border: 0.5px solid rgba(255,255,255,0.15); }
+  .date-confirm { background: #1D9E75; color: #fff; border: none; font-weight: 500; }
+
+  /* Reset confirm */
+  .confirm-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 300; -webkit-box-align: center; align-items: center; -webkit-box-pack: center; justify-content: center; padding: 20px; }
+  .confirm-overlay.show { display: -webkit-box; display: -webkit-flex; display: flex; }
+  .confirm-box { background: #1a1a1a; border: 0.5px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 24px 20px; max-width: 300px; width: 100%; text-align: center; }
+  .confirm-box p { font-size: 14px; color: #999; margin-bottom: 20px; line-height: 1.5; }
+  .confirm-btns { display: -webkit-box; display: -webkit-flex; display: flex; gap: 10px; }
+  .confirm-btns button { -webkit-box-flex: 1; flex: 1; padding: 10px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; -webkit-appearance: none; }
+  .btn-cancel { background: none; color: #999; border: 0.5px solid rgba(255,255,255,0.15); }
+  .btn-confirm { background: #c0392b; color: #fff; border: none; }
+
+  .loading-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #0f0f0f; z-index: 999; display: -webkit-box; display: -webkit-flex; display: flex; -webkit-box-align: center; align-items: center; -webkit-box-pack: center; justify-content: center; flex-direction: column; gap: 12px; }
+  .loading-screen.hidden { display: none; }
+  .loading-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 4px; color: #f0f0f0; }
+  .loading-sub { font-size: 12px; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-title">THE PLAN</div>
+  <div class="loading-sub">Loading your progress...</div>
+</div>
+
+<div class="poster">
+  <div class="header">
+    <div class="title">THE PLAN</div>
+    <div class="subtitle">128 squares &nbsp;&middot;&nbsp; $500 each &nbsp;&middot;&nbsp; $64,000 destroyed</div>
+    <div class="rule">Every square = $500 extra thrown at debt. Tap it when you earn it.</div>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="grid" id="grid"></div>
+  <div id="celebration" class="celebration"></div>
+
+  <div class="progress-section">
+    <span class="progress-label">Progress</span>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="bar"></div></div>
+    <span class="progress-pct" id="pct">0%</span>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Squares done</div><div class="stat-value" id="sq-done">0</div><div class="stat-sub">of 128</div></div>
+    <div class="stat-card"><div class="stat-label">Destroyed</div><div class="stat-value" id="destroyed">$0</div><div class="stat-sub">extra principal</div></div>
+    <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" id="remaining">$64,000</div><div class="stat-sub">to go</div></div>
+  </div>
+
+  <div class="action-row">
+    <button class="undo-btn" onclick="undo()">&#8617; Undo</button>
+    <button class="save-btn" id="save-btn" onclick="saveToSupabase()">Save</button>
+    <button class="reset-btn" onclick="confirmReset()">Reset</button>
+  </div>
+  <div class="status-bar" id="status-bar">Loaded from last save</div>
+</div>
+
+<!-- Date picker popup -->
+<div class="date-overlay" id="date-overlay">
+  <div class="date-box">
+    <h3>When did you earn this?</h3>
+    <p>$500 destroyed &mdash; assign a date</p>
+    <input type="date" class="date-input" id="date-input">
+    <div class="date-btns">
+      <button class="date-cancel" onclick="cancelDate()">Cancel</button>
+      <button class="date-confirm" onclick="confirmDate()">Mark done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset confirm -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box">
+    <p>Reset everything? This clears all progress and cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="btn-confirm" onclick="doReset()">Yes, reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://qorrdmhbjupivjabzzad.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFvcnJkbWhianVwaXZqYWJ6emFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUyNTIxNTUsImV4cCI6MjA5MDgyODE1NX0.t-sfrNFgYh8GVv4yCqD73FfMBgmqfkaMRr19dKfFxkY';
+
+var CARDS = [
+  { name: "Emergency Fund", balance: 1000,  squares: 2,  color: "#2C1654", border: "#1a0d33" },
+  { name: 'Chase Sapphire', balance: 946,   squares: 2,  color: '#378ADD', border: '#185FA5' },
+  { name: 'Citi',           balance: 7741,  squares: 16, color: '#1D9E75', border: '#0F6E56' },
+  { name: 'Wells Fargo',    balance: 11767, squares: 24, color: '#E24B4A', border: '#A32D2D' },
+  { name: 'Capital One',    balance: 17270, squares: 35, color: '#7F77DD', border: '#534AB7' },
+  { name: 'SW Personal',    balance: 6083,  squares: 13, color: '#D4537E', border: '#993556' },
+  { name: 'SW Business',    balance: 1822,  squares: 4,  color: '#BA7517', border: '#854F0B' },
+  { name: 'Chase Ink Biz',  balance: 8303,  squares: 17, color: '#639922', border: '#3B6D11' },
+  { name: 'Discover',       balance: 7544,  squares: 15, color: '#EF9F27', border: '#BA7517' }
+];
+
+var MILESTONES = {26:1,51:1,76:1,101:1,127:1};
+var TOTAL = 128;
+
+// State
+// done is array of 128 items: null or { date: 'YYYY-MM-DD' }
+var done = [];
+var savedDone = [];
+var doneHistory = [];
+var pendingIndex = -1;
+var hasUnsaved = false;
+
+function buildSquareData() {
+  var arr = [];
+  for (var ci = 0; ci < CARDS.length; ci++) {
+    for (var s = 0; s < CARDS[ci].squares; s++) {
+      arr.push({ cardIdx: ci, isLast: s === CARDS[ci].squares - 1 });
+    }
+  }
+  return arr;
+}
+var squareData = buildSquareData();
+
+// Supabase helpers
+function supaFetch(method, body) {
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': method === 'PATCH' ? 'return=minimal' : ''
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(SUPABASE_URL + '/rest/v1/grid_state?id=eq.1', opts);
+}
+
+function loadFromSupabase() {
+  supaFetch('GET').then(function(r){ return r.json(); }).then(function(data) {
+    if (data && data[0]) {
+      done = data[0].done || [];
+      doneHistory = data[0].done_history || [];
+      // pad to 126
+      while (done.length < TOTAL) done.push(null);
+    } else {
+      done = [];
+      while (done.length < TOTAL) done.push(null);
+      doneHistory = [];
+    }
+    savedDone = JSON.parse(JSON.stringify(done));
+    hasUnsaved = false;
+    document.getElementById('loading-screen').className = 'loading-screen hidden';
+    buildGrid();
+    setStatus('Loaded from last save', '');
+  }).catch(function() {
+    done = [];
+    while (done.length < TOTAL) done.push(null);
+    doneHistory = [];
+    savedDone = JSON.parse(JSON.stringify(done));
+    document.getElementById('loading-screen').className = 'loading-screen hidden';
+    buildGrid();
+    setStatus('Could not connect — working offline', 'error-notice');
+  });
+}
+
+function saveToSupabase() {
+  var btn = document.getElementById('save-btn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  btn.className = 'save-btn saving';
+  supaFetch('PATCH', { done: done, done_history: doneHistory }).then(function(r) {
+    if (r.ok) {
+      savedDone = JSON.parse(JSON.stringify(done));
+      hasUnsaved = false;
+      btn.textContent = 'Save';
+      btn.disabled = false;
+      btn.className = 'save-btn';
+      setStatus('Saved ' + formatTime(new Date()), 'saved-notice');
+      buildGrid();
+    } else {
+      btn.textContent = 'Save';
+      btn.disabled = false;
+      btn.className = 'save-btn';
+      setStatus('Save failed — try again', 'error-notice');
+    }
+  }).catch(function() {
+    btn.textContent = 'Save';
+    btn.disabled = false;
+    btn.className = 'save-btn';
+    setStatus('Save failed — check connection', 'error-notice');
+  });
+}
+
+function formatTime(d) {
+  var h = d.getHours(); var m = d.getMinutes();
+  var ampm = h >= 12 ? 'pm' : 'am';
+  h = h % 12; if (!h) h = 12;
+  return 'at ' + h + ':' + (m < 10 ? '0'+m : m) + ampm;
+}
+
+function setStatus(msg, cls) {
+  var el = document.getElementById('status-bar');
+  el.textContent = msg;
+  el.className = 'status-bar' + (cls ? ' ' + cls : '');
+}
+
+function markUnsaved() {
+  if (!hasUnsaved) {
+    hasUnsaved = true;
+    setStatus('Unsaved changes — tap Save to keep them', 'unsaved-notice');
+  }
+}
+
+// Grid
+function getSqSize() {
+  var gridEl = document.getElementById('grid');
+  var cols = 14;
+  var w = gridEl.offsetWidth;
+  if (!w) w = (window.innerWidth || 320) - 24;
+  return Math.floor((w - (cols - 1) * 4) / cols);
+}
+
+function buildGrid() {
+  var sqSize = getSqSize();
+  var checkSize = Math.max(9, Math.floor(sqSize * 0.55));
+  var dateSize = Math.max(6, Math.floor(sqSize * 0.18));
+  var grid = document.getElementById('grid');
+  grid.innerHTML = '';
+
+  for (var i = 0; i < squareData.length; i++) {
+    var sq = squareData[i];
+    var card = CARDS[sq.cardIdx];
+    var entry = done[i];
+    var isDone = entry !== null && entry !== undefined && entry !== false;
+    var isSaved = savedDone[i] !== null && savedDone[i] !== undefined && savedDone[i] !== false;
+    var isMilestone = !!MILESTONES[i];
+    var isUnsaved = isDone !== isSaved;
+
+    var el = document.createElement('div');
+    el.className = 'sq' + (isUnsaved ? ' unsaved' : '');
+    el.style.width = sqSize + 'px';
+    el.style.height = sqSize + 'px';
+    el.style.backgroundColor = card.color;
+    el.style.borderColor = (isMilestone || sq.isLast) ? 'rgba(255,255,255,0.6)' : card.border;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'sq-overlay' + (isDone ? ' show' : '');
+
+    var chk = document.createElement('span');
+    chk.className = 'sq-check';
+    chk.textContent = '\u2713';
+    chk.style.fontSize = checkSize + 'px';
+    overlay.appendChild(chk);
+
+    if (isDone && entry && entry.date) {
+      var dl = document.createElement('span');
+      dl.className = 'sq-date-label';
+      dl.style.fontSize = dateSize + 'px';
+      dl.textContent = formatDateShort(entry.date);
+      overlay.appendChild(dl);
+    }
+
+    el.appendChild(overlay);
+
+    if (isMilestone && !isDone) {
+      var star = document.createElement('span');
+      star.className = 'sq-star';
+      star.textContent = '\u2605';
+      el.appendChild(star);
+    }
+
+    (function(idx){ el.onclick = function(){ handleTap(idx); }; })(i);
+    grid.appendChild(el);
+  }
+  updateStats();
+}
+
+function formatDateShort(dateStr) {
+  if (!dateStr) return '';
+  var parts = dateStr.split('-');
+  if (parts.length < 3) return dateStr;
+  return (parseInt(parts[1])) + '/' + parseInt(parts[2]);
+}
+
+function handleTap(i) {
+  var entry = done[i];
+  var isDone = entry !== null && entry !== undefined && entry !== false;
+  if (isDone) {
+    // uncheck immediately
+    doneHistory.push({ idx: i, prev: done[i] });
+    done[i] = null;
+    markUnsaved();
+    buildGrid();
+  } else {
+    // show date picker
+    pendingIndex = i;
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth()+1).padStart(2,'0');
+    var dd = String(today.getDate()).padStart(2,'0');
+    document.getElementById('date-input').value = yyyy+'-'+mm+'-'+dd;
+    document.getElementById('date-overlay').className = 'date-overlay show';
+  }
+}
+
+function confirmDate() {
+  var dateVal = document.getElementById('date-input').value;
+  if (!dateVal) { setStatus('Pick a date first', 'error-notice'); return; }
+  doneHistory.push({ idx: pendingIndex, prev: done[pendingIndex] });
+  done[pendingIndex] = { date: dateVal };
+  pendingIndex = -1;
+  document.getElementById('date-overlay').className = 'date-overlay';
+  markUnsaved();
+  checkCardComplete(doneHistory[doneHistory.length-1] ? doneHistory[doneHistory.length-1].idx : -1);
+  buildGrid();
+}
+
+function cancelDate() {
+  pendingIndex = -1;
+  document.getElementById('date-overlay').className = 'date-overlay';
+}
+
+function undo() {
+  if (!doneHistory.length) return;
+  var last = doneHistory.pop();
+  done[last.idx] = last.prev;
+  markUnsaved();
+  buildGrid();
+}
+
+function confirmReset() { document.getElementById('confirm-overlay').className = 'confirm-overlay show'; }
+function closeConfirm() { document.getElementById('confirm-overlay').className = 'confirm-overlay'; }
+function doReset() {
+  done = [];
+  while (done.length < TOTAL) done.push(null);
+  doneHistory = [];
+  closeConfirm();
+  document.getElementById('celebration').style.display = 'none';
+  markUnsaved();
+  buildGrid();
+}
+
+function checkCardComplete(idx) {
+  if (idx < 0 || !squareData[idx] || !squareData[idx].isLast) return;
+  var card = CARDS[squareData[idx].cardIdx];
+  var cel = document.getElementById('celebration');
+  cel.style.display = 'block';
+  cel.textContent = '\ud83c\udf89 ' + card.name + ' is GONE. $' + card.balance.toLocaleString() + ' destroyed. On to the next one.';
+  setTimeout(function(){ cel.style.display='none'; }, 7000);
+}
+
+function updateStats() {
+  var count = 0;
+  for (var i = 0; i < done.length; i++) {
+    if (done[i] !== null && done[i] !== undefined && done[i] !== false) count++;
+  }
+  var pct = Math.round((count / TOTAL) * 100);
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('pct').textContent = pct + '%';
+  document.getElementById('sq-done').textContent = count;
+  document.getElementById('destroyed').textContent = '$' + (count * 500).toLocaleString();
+  document.getElementById('remaining').textContent = '$' + (((TOTAL - count) * 500)).toLocaleString();
+}
+
+function buildLegend() {
+  var legend = document.getElementById('legend');
+  for (var i = 0; i < CARDS.length; i++) {
+    var card = CARDS[i];
+    var item = document.createElement('span'); item.className = 'legend-item';
+    var dot = document.createElement('span'); dot.className = 'legend-dot';
+    dot.style.backgroundColor = card.color;
+    dot.style.border = '1px solid ' + card.border;
+    var lbl = document.createElement('span');
+    lbl.textContent = card.name + ' (' + card.squares + ')';
+    item.appendChild(dot); item.appendChild(lbl); legend.appendChild(item);
+  }
+}
+
+buildLegend();
+loadFromSupabase();
+</script>
+</body>
+</html>
